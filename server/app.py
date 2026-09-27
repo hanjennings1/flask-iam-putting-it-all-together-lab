@@ -44,8 +44,20 @@ class CheckSession(Resource):
         return {'errors': ['Unauthorized']}, 401                 # not logged in (or user no longer exists)
     
 
+# LOGIN FEATURE
 class Login(Resource):
-    pass
+    def post(self):
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        user = User.query.filter(User.username == username).first()  # None if no such username
+
+        if user and user.authenticate(password):     # user exists AND password matches the hash
+            session['user_id'] = user.id             # login the user
+            return UserSchema().dump(user), 200      # user JSON + 200 OK
+
+        return {'errors': ['Invalid username or password.']}, 401   # if wrong username or password
 
 class Logout(Resource):
     pass
