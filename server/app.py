@@ -8,7 +8,7 @@ from config import app, db, api
 from models import User, Recipe, UserSchema, RecipeSchema
 
 
-# SIGN-UP CLASS
+# SIGN-UP CLASS ----
 class Signup(Resource):
     def post(self):
         data = request.get_json()                    # JSON body sent from the frontend
@@ -31,7 +31,7 @@ class Signup(Resource):
             return {'errors': ['Username is required and must be unique.']}, 422
 
 
-# CHECK SESSION
+# CHECK SESSION ----
 class CheckSession(Resource):
     def get(self):
         user_id = session.get('user_id')                         # None if no one is logged in
@@ -44,7 +44,7 @@ class CheckSession(Resource):
         return {'errors': ['Unauthorized']}, 401                 # not logged in (or user no longer exists)
     
 
-# LOGIN FEATURE
+# LOGIN FEATURE ----
 class Login(Resource):
     def post(self):
         data = request.get_json()
@@ -59,8 +59,15 @@ class Login(Resource):
 
         return {'errors': ['Invalid username or password.']}, 401   # if wrong username or password
 
+
+# LOGOUT FEATURE ----
 class Logout(Resource):
-    pass
+    def delete(self):
+        if session.get('user_id'):                  # if someone is logged in
+            session.pop('user_id', None)            # remove their ID (logs them out)
+            return {}, 204                          # empty response + 204 No Content
+
+        return {'errors': ['Unauthorized']}, 401    # no one to log out
 
 class RecipeIndex(Resource):
     pass
