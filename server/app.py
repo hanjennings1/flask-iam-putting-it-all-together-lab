@@ -7,8 +7,28 @@ from sqlalchemy.exc import IntegrityError
 from config import app, db, api
 from models import User, Recipe, UserSchema, RecipeSchema
 
+
+# SIGN-UP CLASS
 class Signup(Resource):
-    pass
+    def post(self):
+        data = request.get_json()                    # JSON body sent from the frontend
+
+        user = User(
+            username=data.get('username'),           # .get() returns None if missing, instead of crashing
+            image_url=data.get('image_url'),
+            bio=data.get('bio'),
+        )
+        user.password_hash = data.get('password')    # runs the setter, which hashes the password
+
+        try:
+            db.session.add(user)
+            db.session.commit()                      # IntegrityError here if username is missing or taken
+            session['user_id'] = user.id             # login the new user
+            return UserSchema().dump(user), 201      # user JSON + 201 Created
+
+        except IntegrityError:
+            db.session.rollback()                    # undo the failed save so the session stays usable
+            return {'errors': ['Username is required and must be unique.']}, 422
 
 class CheckSession(Resource):
     pass
