@@ -69,8 +69,45 @@ class Logout(Resource):
 
         return {'errors': ['Unauthorized']}, 401    # no one to log out
 
+
+# RECIPE FEATURE ----
 class RecipeIndex(Resource):
-    pass
+    # LIST OUT THE RECIPES --
+    def get(self):
+        if session.get('user_id'):                                # only logged-in users can view recipes
+            recipes = Recipe.query.all()                          # every recipe in the database
+            return RecipeSchema(many=True).dump(recipes), 200     # list of recipe dicts + 200 OK
+
+        return {'errors': ['Unauthorized']}, 401                  # not logged in
+
+    # CREATE A NEW RECIPE --
+    def post(self):
+        user_id = session.get('user_id')
+        if not user_id:                                         # must be logged in to create a recipe
+            return {'errors': ['Unauthorized']}, 401
+
+        data = request.get_json()
+
+        try:
+            recipe = Recipe(
+                title=data.get('title'),
+                instructions=data.get('instructions'),          # validator runs here
+                minutes_to_complete=data.get('minutes_to_complete'),
+                user_id=user_id,                                # recipe belongs to the logged-in user
+            )
+            db.session.add(recipe)
+            db.session.commit()
+            return RecipeSchema().dump(recipe), 201             # new recipe with nested user + 201 Created
+
+        except ValueError as e:                                 # if onstructions missing or under 50 chars
+            db.session.rollback()
+            return {'errors': [str(e)]}, 422
+
+        except IntegrityError:                                  # if title missing (nullable=False)
+            db.session.rollback()
+            return {'errors': ['Title is required.']}, 422
+
+    
 
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(CheckSession, '/check_session', endpoint='check_session')
