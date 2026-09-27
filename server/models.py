@@ -45,7 +45,7 @@ class Recipe(db.Model):
     # VALIDATION ----
     @validates('instructions')
     def validate_instructions(self, key, instructions):
-        if not instructions or len(instructions) < 50:                     # missing or too short
+        if not instructions or len(instructions) < 50:                     # missing or too short(50-char min)
             raise ValueError('Instructions must be at least 50 characters long.')
         return instructions                                                # valid; save it
 
