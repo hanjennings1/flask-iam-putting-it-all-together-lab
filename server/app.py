@@ -30,8 +30,19 @@ class Signup(Resource):
             db.session.rollback()                    # undo the failed save so the session stays usable
             return {'errors': ['Username is required and must be unique.']}, 422
 
+
+# CHECK SESSION
 class CheckSession(Resource):
-    pass
+    def get(self):
+        user_id = session.get('user_id')                         # None if no one is logged in
+
+        if user_id:                                              # truthy check also catches user_id = None
+            user = User.query.filter(User.id == user_id).first() # look up the logged-in user
+            if user:
+                return UserSchema().dump(user), 200              # user JSON + 200 OK
+
+        return {'errors': ['Unauthorized']}, 401                 # not logged in (or user no longer exists)
+    
 
 class Login(Resource):
     pass
